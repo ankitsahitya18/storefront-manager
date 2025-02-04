@@ -8,8 +8,7 @@ export abstract class BaseController {
 
 	constructor(modelName: keyof PrismaClient) {
 		this.prisma = new PrismaClient();
-		this.model = this.prisma[modelName as keyof PrismaClient];
-		console.log(typeof this.model);
+		this.model = this.prisma[modelName];
 	}
 
 	/**
@@ -23,7 +22,6 @@ export abstract class BaseController {
 
 			// Calculate the number of records to skip for pagination
 			const skip = (page - 1) * limit;
-
 			// Call the getFilters method to handle dynamic filter logic
 			const filters = this.getFilters(req);
 
@@ -83,7 +81,6 @@ export abstract class BaseController {
 			});
 			res.status(201).json(record);
 		} catch (error) {
-			console.error(error);
 			this.handleError(error, res);
 		}
 	}
@@ -99,9 +96,9 @@ export abstract class BaseController {
 				data: req?.body,
 			});
 
-			// if (!record) {
-			// 	throw new NotFoundError(`${this.model.name} with ID ${id} not found`);
-			// }
+			if (!record) {
+				throw new NotFoundError(`${this.model.name} with ID ${id} not found`);
+			}
 
 			res.json(record);
 		} catch (error) {
@@ -119,9 +116,9 @@ export abstract class BaseController {
 				where: { id: Number(id) },
 			});
 
-			// if (!record) {
-			// 	throw new NotFoundError(`${this.model.name} with ID ${id} not found`);
-			// }
+			if (!record) {
+				throw new NotFoundError(`${this.model.name} with ID ${id} not found`);
+			}
 
 			res.status(204).send();
 		} catch (error) {
@@ -150,6 +147,10 @@ export abstract class BaseController {
 	protected getFilters(req: Request): Record<string, any> {
 		const filters: Record<string, any> = {};
 		const query = req.body.filterConditions;
+
+		if (!query) {
+			return filters;
+		}
 
 		Object.keys(query).forEach((key) => {
 			filters[key] = query[key];

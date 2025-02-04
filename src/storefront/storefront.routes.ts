@@ -7,7 +7,8 @@ class StorefrontRoutes extends BaseApiRoutes {
 	}
 
 	protected initializeRoutes(): void {
-		this.addRestRoutes(StorefrontController, {
+		const controller = new StorefrontController();
+		this.addRestRoutes(controller, {
 			index: [],
 			show: [],
 			create: [],
