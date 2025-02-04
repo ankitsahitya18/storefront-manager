@@ -4,11 +4,12 @@ import { CustomError, NotFoundError, UnprocessableEntityError } from '../errors'
 
 export abstract class BaseController {
 	private readonly prisma: PrismaClient;
-	private readonly modelName: string;
+	private readonly model: any;
 
-	constructor(modelName: string) {
+	constructor(modelName: keyof PrismaClient) {
 		this.prisma = new PrismaClient();
-		this.modelName = modelName;
+		this.model = this.prisma[modelName as keyof PrismaClient];
+		console.log(typeof this.model);
 	}
 
 	/**
@@ -27,26 +28,26 @@ export abstract class BaseController {
 			const filters = this.getFilters(req);
 
 			// Perform the query with filtering and pagination
-			const records = await this.prisma[this.modelName].findMany({
+			const records = await this.model.findMany({
 				where: filters, // Apply filters
 				skip: skip, // Pagination: Skip the appropriate number of records
 				take: limit, // Pagination: Limit the number of records returned
 			});
 
 			// Get the total count of records for pagination metadata
-			const totalRecords = await this.prisma[this.modelName].count({
+			const totalRecords = await this.model.count({
 				where: filters, // Apply filters
 			});
 
 			// Send the response with records and pagination metadata
 			res.json({
-				data: records,
 				pagination: {
 					page: page,
 					limit: limit,
 					totalRecords: totalRecords,
 					totalPages: Math.ceil(totalRecords / limit),
 				},
+				data: records,
 			});
 		} catch (error) {
 			this.handleError(error, res);
@@ -58,12 +59,12 @@ export abstract class BaseController {
 	public async show(req: Request, res: Response): Promise<void> {
 		const { id } = req.params;
 		try {
-			const record = await this.prisma[this.modelName].findUnique({
+			const record = await this.model.findUnique({
 				where: { id: Number(id) },
 			});
 
 			if (!record) {
-				throw new NotFoundError(`${this.modelName} with ID ${id} not found`);
+				throw new NotFoundError(`${this.model.name} with ID ${id} not found`);
 			}
 
 			res.json(record);
@@ -77,11 +78,12 @@ export abstract class BaseController {
 	 */
 	public async create(req: Request, res: Response): Promise<void> {
 		try {
-			const record = await this.prisma[this.modelName].create({
+			const record = await this.model.create({
 				data: req.body,
 			});
 			res.status(201).json(record);
 		} catch (error) {
+			console.error(error);
 			this.handleError(error, res);
 		}
 	}
@@ -92,14 +94,14 @@ export abstract class BaseController {
 	public async update(req: Request, res: Response): Promise<void> {
 		const { id } = req.params;
 		try {
-			const record = await this.prisma[this.modelName].update({
+			const record = await this.model.update({
 				where: { id: Number(id) },
-				data: req.body,
+				data: req?.body,
 			});
 
-			if (!record) {
-				throw new NotFoundError(`${this.modelName} with ID ${id} not found`);
-			}
+			// if (!record) {
+			// 	throw new NotFoundError(`${this.model.name} with ID ${id} not found`);
+			// }
 
 			res.json(record);
 		} catch (error) {
@@ -113,13 +115,13 @@ export abstract class BaseController {
 	public async destroy(req: Request, res: Response): Promise<void> {
 		const { id } = req.params;
 		try {
-			const record = await this.prisma[this.modelName].delete({
+			const record = await this.model.delete({
 				where: { id: Number(id) },
 			});
 
-			if (!record) {
-				throw new NotFoundError(`${this.modelName} with ID ${id} not found`);
-			}
+			// if (!record) {
+			// 	throw new NotFoundError(`${this.model.name} with ID ${id} not found`);
+			// }
 
 			res.status(204).send();
 		} catch (error) {

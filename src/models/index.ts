@@ -1,9 +1,11 @@
-import prisma from './prismaClient';
+// import prisma from './prismaClient';
 
-const xprisma = prisma.$extends({
-	query: {},
-});
+// const xprisma = prisma.$extends({
+// 	query: {},
+// });
 
-const models = {};
+// const models = {
+// 	Storefront: xprisma.storefront,
+// };
 
-export default models;
+// export default models;

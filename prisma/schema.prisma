@@ -12,3 +12,283 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+enum BenefitSortCriteria {
+  BenefitType
+  Category
+}
+
+enum MembershipCriteria {
+  NotRequired
+  Visible
+  NotVisible
+}
+
+enum MerchantStatus {
+  active
+  inActive
+}
+
+enum RedeemType {
+  CODE
+  PASS
+  QR
+  EMAIL
+  CALL
+}
+
+enum BenefitType {
+  model3d
+  video
+  audio
+  digitalbook
+  coupon
+  digitalcollectible
+  generic
+  streams
+  survey
+  sweepstakes
+}
+
+enum DiscountType {
+  flat
+  percentage
+  partner
+}
+
+enum BenefitStatus {
+  draft
+  inActive
+  active
+}
+
+enum StorefrontTemplate {
+  Default
+  Anime
+  Commercial
+}
+
+enum StorefrontLoginOptions {
+  Default
+  Email
+  SMS
+  EmailAndSMS
+}
+
+model Storefront {
+  id                        Int                        @id @default(autoincrement())
+  currentTierId             BigInt?
+  title                     String                     @db.VarChar(20)
+  cnameUrl                  String?                    @db.VarChar(1500)
+  logoUrl                   String                     @db.VarChar(1500)
+  heroImageUrl              String?                    @db.VarChar(1500)
+  heroHeadline              String?                    @db.VarChar(1500)
+  heroDesc                  String?                    @db.VarChar(1500)
+  heroBenefitsHeadline      String?                    @db.VarChar(1500)
+  heroBenefitsDescription   String?                    @db.VarChar(1500)
+  marketingHeadline         String?                    @db.VarChar(1500)
+  marketingDesc             String?                    @db.VarChar(1500)
+  headerText                String?
+  bodyText                  String?
+  pointsTableHeaderText     String?
+  pointsTableBodyText       String?
+  enableFooter              Boolean                    @default(false)
+  companyName               String?
+  footerText                String?                    @db.VarChar(1500)
+  websiteUrl                String?                    @db.VarChar(1500)
+  twitterUrl                String?                    @db.VarChar(1500)
+  discordUrl                String?                    @db.VarChar(1500)
+  mediumUrl                 String?                    @db.VarChar(1500)
+  defaultChain              String?                    @default("mumbai") @db.VarChar(100)
+  locales                   StorefrontLocale[]
+  collections               StorefrontCollections[]
+  createdAt                 DateTime                   @default(now()) @db.Timestamptz(3)
+  createdBy                 Int?
+  updatedAt                 DateTime                   @default(now()) @updatedAt @db.Timestamptz(3)
+  themeId                   StorefrontTemplate         @default(Default)
+  loginMethod               StorefrontLoginOptions     @default(EmailAndSMS)
+  enablePointsTable         Boolean                    @default(true)
+  enableProgramTable        Boolean                    @default(true)
+  showBenefitsCarousel      Boolean                    @default(true)
+  FCMtopics                 StorefrontFCMtopics[]
+  rememberMeInDays          Int                        @default(3)
+  defaultSmsCountryCode     String                     @default("US")
+  smsSupportedCountries     String                     @default("US,JP,IN,BR,MY,CA")
+  isArchived                Boolean                    @default(false)
+  verifyEmailMailTemplate   String?                    @db.Text
+  resetPasswordMailTemplate String?                    @db.Text
+  preRegisterUser           Boolean                    @default(false)
+  showProgramName           Boolean                    @default(true)
+  useCustomMailTemplate     Boolean                    @default(false)
+  benefitSortBy             BenefitSortCriteria        @default(BenefitType)
+  benefitSortCriteria       Json?
+  themeDetails              Json?
+  hiddenMenuItems           String[]                   @default([])
+  showImageOnly             Boolean?
+  membershipCriteria        MembershipCriteria?
+  heroBenefits              Benefit[]
+  heroImages                StorefrontHeroImages[]
+  categoryImages            StorefrontCategoryImages[]
+  Locale                    Locale?                    @relation(fields: [localeLocaleId], references: [localeId])
+  localeLocaleId            String?
+
+  @@unique([title])
+  @@unique([cnameUrl])
+}
+
+model Locale {
+  localeId         String             @id
+  countryCode      String
+  country          Country            @relation(fields: [countryCode], references: [countryCode])
+  languageCode     String
+  language         Language           @relation(fields: [languageCode], references: [languageCode])
+  isSupported      Boolean            @default(false)
+  createdAt        DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime           @default(now()) @db.Timestamptz(3)
+  storefronts      Storefront[]
+  Benefit          Benefit[]
+  StorefrontLocale StorefrontLocale[]
+
+  @@unique([countryCode, languageCode])
+}
+
+model Benefit {
+  id                   BigInt        @id @default(autoincrement())
+  redeemType           RedeemType    @default(CODE)
+  title                String        @db.VarChar(255)
+  shortDescription     String?       @db.VarChar(1024)
+  description          String        @db.VarChar(5000)
+  logoUrl              String?       @db.VarChar(750)
+  previewResourceUrl   String?       @db.VarChar(750)
+  resourceUrl          String?       @db.VarChar(750)
+  disclaimer           String?       @db.VarChar(2048)
+  type                 BenefitType
+  originalPrice        Float?
+  discountPrice        Float?
+  redemptionTotalLimit Int?
+  redemptionPerPass    Int?
+  couponCode           String?       @db.VarChar(75)
+  discountType         DiscountType  @default(flat)
+  unlimitedRedemption  Boolean       @default(false)
+  ownershipRequired    Boolean       @default(false)
+  createdAt            DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime      @updatedAt @db.Timestamptz(3)
+  startDate            DateTime?     @db.Timestamptz(3)
+  endDate              DateTime?     @db.Timestamptz(3)
+  status               BenefitStatus @default(draft)
+  activeDate           DateTime?     @db.Timestamptz(3)
+  currencyCode         String?
+  currencySymbol       String?
+  allowDownload        Boolean       @default(false)
+  multipleResource     Boolean       @default(true)
+  defaultLocaleId      String        @default("en_US")
+  defaultLocale        Locale        @relation(fields: [defaultLocaleId], references: [localeId])
+  frequencyLimit       Int?
+  showImagesOnly       Boolean       @default(false)
+  partnerRedirectUrl   String?
+  storefronts          Storefront[]
+  isDeleted            Boolean       @default(false)
+  uniqueTransactionId  String?       @db.VarChar(555)
+  marketingCost        Float         @default(0)
+  merchantExpenses     Float         @default(0)
+  purchaseCost         Float         @default(0)
+
+  @@index([title])
+  @@index([couponCode])
+}
+
+model Country {
+  countryCode String   @id
+  country     String
+  locales     Locale[]
+
+  @@unique([country])
+  @@unique([countryCode])
+}
+
+model Language {
+  languageCode String   @id
+  language     String
+  locales      Locale[]
+
+  @@unique([language])
+  @@unique([languageCode])
+}
+
+model StorefrontLocale {
+  id                        BigInt     @id @default(autoincrement())
+  storefrontId              Int
+  storefront                Storefront @relation(fields: [storefrontId], references: [id])
+  localeId                  String
+  locale                    Locale     @relation(fields: [localeId], references: [localeId])
+  logoUrl                   String     @db.VarChar(1500)
+  headerText                String?
+  bodyText                  String?
+  heroBenefitsHeadline      String?    @db.VarChar(1500)
+  heroBenefitsDescription   String?    @db.VarChar(1500)
+  companyName               String?
+  footerText                String?    @db.VarChar(1500)
+  websiteUrl                String?    @db.VarChar(1500)
+  twitterUrl                String?    @db.VarChar(1500)
+  discordUrl                String?    @db.VarChar(1500)
+  mediumUrl                 String?    @db.VarChar(1500)
+  heroImageUrl              String?    @db.VarChar(1500)
+  heroHeadline              String?    @db.VarChar(1500)
+  heroDesc                  String?    @db.VarChar(1500)
+  marketingHeadline         String?    @db.VarChar(1500)
+  marketingDesc             String?    @db.VarChar(1500)
+  pointsTableHeaderText     String?
+  pointsTableBodyText       String?
+  verifyEmailMailTemplate   String?    @db.Text
+  resetPasswordMailTemplate String?    @db.Text
+  createdAt                 DateTime   @default(now()) @db.Timestamptz(3)
+
+  @@unique([storefrontId, localeId])
+  @@index([storefrontId])
+}
+
+model StorefrontCollections {
+  id           Int        @id @default(autoincrement())
+  storefrontId Int
+  storefront   Storefront @relation(fields: [storefrontId], references: [id])
+  autoRegister Boolean    @default(false)
+  position     Int?
+  createdAt    DateTime   @default(now()) @db.Timestamptz(3)
+
+  @@index([storefrontId])
+}
+
+model StorefrontFCMtopics {
+  id                 BigInt     @id @default(autoincrement())
+  topicName          String     @db.VarChar(500)
+  storeAdminFCMToken String?    @db.VarChar(1000)
+  createdAt          DateTime   @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime   @default(now()) @db.Timestamptz(3)
+  storefrontId       Int
+  storefront         Storefront @relation(fields: [storefrontId], references: [id])
+
+  @@unique([topicName])
+  @@index([storefrontId])
+}
+
+model StorefrontHeroImages {
+  id           Int            @id @default(autoincrement())
+  storefrontId Int
+  storefront   Storefront     @relation(fields: [storefrontId], references: [id])
+  imageUrl     String         @db.VarChar(1500)
+  redirectUrl  String?        @db.VarChar(1500)
+  status       MerchantStatus @default(active)
+  startDate    DateTime?      @db.Timestamptz(3)
+  endDate      DateTime?      @db.Timestamptz(3)
+  createdAt    DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime       @default(now()) @updatedAt @db.Timestamptz(3)
+
+  @@index([storefrontId])
+}
+
+model StorefrontCategoryImages {
+  id           BigInt     @id @default(autoincrement())
+  storefrontId Int
+  storefront   Storefront @relation(fields: [storefrontId], references: [id])
+  url          String     @db.VarChar(255)
+}

@@ -26,6 +26,7 @@ export abstract class BaseApiRoutes {
 	 */
 	protected addRestRoutes(controller: any, middlewares: { [key: string]: Function[] } = {}): void {
 		const methods = Object.getOwnPropertyNames(controller.prototype);
+		console.log(controller.prototype);
 
 		// Index Route
 		if (methods.includes('index')) {
@@ -56,5 +57,6 @@ export abstract class BaseApiRoutes {
 			const destroyMiddlewares = middlewares['destroy'] || [];
 			this.router.delete(`${this.basePath}/:id`, [...destroyMiddlewares, controller.prototype.destroy]);
 		}
+		console.log(methods);
 	}
 }
