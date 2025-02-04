@@ -17,8 +17,8 @@ export abstract class BaseController {
 	public async index(req: Request, res: Response): Promise<void> {
 		try {
 			// Get pagination parameters from the query string
-			const page = parseInt(req.query.page as string) || 1; // Default to page 1
-			const limit = parseInt(req.query.limit as string) || 10; // Default to 10 items per page
+			const page = parseInt(req.body.page as string) || 1; // Default to page 1
+			const limit = parseInt(req.body.limit as string) || 10; // Default to 10 items per page
 
 			// Calculate the number of records to skip for pagination
 			const skip = (page - 1) * limit;
