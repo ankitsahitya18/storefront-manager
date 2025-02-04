@@ -6,9 +6,9 @@ export abstract class BaseController {
 	private readonly prisma: PrismaClient;
 	private readonly model: any;
 
-	constructor(modelName: keyof PrismaClient) {
+	constructor(model: any) {
 		this.prisma = new PrismaClient();
-		this.model = this.prisma[modelName];
+		this.model = model;
 	}
 
 	/**
